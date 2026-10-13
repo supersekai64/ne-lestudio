@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PosterPreview, type PreviewStatus } from "@/components/poster-preview";
 import { createDefaultConfig, describePoster, FORMATS, PALETTES, TEMPLATES } from "@/lib/catalog";
 import { IMAGE_ACCEPT, IMAGE_IMPORT_HELP, importPosterImage } from "@/lib/import-image";
+import { renderPoster } from "@/lib/render-poster";
 import type { FormatId, PosterConfig, TemplateField, TemplateId } from "@/lib/studio-types";
 
 const CATEGORIES = ["Tous les modèles", "Message", "Citation", "Événement", "Image", "Chiffre", "Typographie"];
@@ -215,7 +216,7 @@ function Editor({ templateId, onBack }: { templateId: TemplateId; onBack: () => 
   const template = TEMPLATES.find((item) => item.id === templateId)!;
   const [config, setConfig] = useState(() => createDefaultConfig(templateId));
   const [editedFields, setEditedFields] = useState<Record<string, boolean>>({});
-  const [status, setStatus] = useState<PreviewStatus>({ ready: false, fits: true, altText: describePoster(config) });
+  const [status, setStatus] = useState<PreviewStatus & { config: PosterConfig }>({ config, ready: false, fits: true, altText: describePoster(config) });
   const [kind, setKind] = useState<"png" | "jpeg">("png");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -224,7 +225,7 @@ function Editor({ templateId, onBack }: { templateId: TemplateId; onBack: () => 
   const [imageError, setImageError] = useState("");
   const [result, setResult] = useState<{ url: string; fileName: string; size: number; width: number; height: number; altText: string; kind: string } | null>(null);
   const [resultOpen, setResultOpen] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const exportPending = useRef(false);
   const downloadRef = useRef<HTMLButtonElement>(null);
   const resultUrl = useRef<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -233,13 +234,14 @@ function Editor({ templateId, onBack }: { templateId: TemplateId; onBack: () => 
   const imageImportVersion = useRef(0);
   const imageImportPending = useRef(false);
   const mountedRef = useRef(true);
-  const renderedConfig = useRef<PosterConfig | null>(null);
   const format = FORMATS.find((item) => item.id === config.formatId)!;
   const validation = useMemo(() => validationErrors(config), [config]);
   const errors = templateId === "quote" ? Object.fromEntries(Object.entries(validation).filter(([key]) => editedFields[key])) : validation;
   const missingImage = template.photo && !config.image;
-  const canExport = status.ready && status.fits && Object.keys(validation).length === 0 && !missingImage && !imageImporting;
-  const exportHelp = imageImporting ? "La préparation de votre image est en cours." : Object.keys(validation).length ? Object.keys(errors).length ? "Corrigez les champs signalés pour activer le téléchargement." : "Saisissez votre citation pour activer le téléchargement." : missingImage ? "Ajoutez votre image pour activer le téléchargement." : !status.ready ? "Le téléchargement sera disponible dès que l’aperçu sera prêt." : !status.fits ? "Raccourcissez votre texte pour activer le téléchargement." : null;
+  const currentStatus = status.config === config ? status : null;
+  const renderBlocked = currentStatus ? !currentStatus.fits || Boolean(currentStatus.error) : false;
+  const canExport = !renderBlocked && Object.keys(validation).length === 0 && !missingImage && !imageImporting;
+  const exportHelp = imageImporting ? "La préparation de votre image est en cours." : Object.keys(validation).length ? Object.keys(errors).length ? "Corrigez les champs signalés pour activer le téléchargement." : "Saisissez votre citation pour activer le téléchargement." : missingImage ? "Ajoutez votre image pour activer le téléchargement." : renderBlocked && !currentStatus?.error ? "Raccourcissez votre texte pour activer le téléchargement." : null;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -252,18 +254,17 @@ function Editor({ templateId, onBack }: { templateId: TemplateId; onBack: () => 
   }, []);
 
   const onStatus = useCallback((next: PreviewStatus) => {
-    renderedConfig.current = next.ready ? config : null;
-    setStatus(next);
+    setStatus({ ...next, config });
   }, [config]);
 
-  function updateConfig(update: Partial<PosterConfig>) { renderedConfig.current = null; setConfig((previous) => ({ ...previous, ...update })); setMessage(""); }
-  function updateValue(key: string, value: string) { renderedConfig.current = null; setEditedFields((previous) => ({ ...previous, [key]: true })); setConfig((previous) => ({ ...previous, values: { ...previous.values, [key]: value } })); setMessage(""); }
+  function updateConfig(update: Partial<PosterConfig>) { setConfig((previous) => ({ ...previous, ...update })); setMessage(""); }
+  function updateValue(key: string, value: string) { setEditedFields((previous) => ({ ...previous, [key]: true })); setConfig((previous) => ({ ...previous, values: { ...previous.values, [key]: value } })); setMessage(""); }
   function notify(text: string, error = false) { setMessage(text); setMessageError(error); }
 
   async function importImage(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
-    if (!file) return;
+    if (!file || exportPending.current) return;
     const version = ++imageImportVersion.current;
     imageImportPending.current = true;
     setImageImporting(true);
@@ -296,17 +297,24 @@ function Editor({ templateId, onBack }: { templateId: TemplateId; onBack: () => 
     if (imageInputRef.current) imageInputRef.current.value = "";
   }
 
-  function removeImage() { clearImage(); updateConfig({ image: undefined }); requestAnimationFrame(() => imageButtonRef.current?.focus()); }
-  function resetEditor() { clearImage(); renderedConfig.current = null; setConfig(createDefaultConfig(templateId)); setEditedFields({}); setMessage(""); }
+  function removeImage() { if (exportPending.current) return; clearImage(); updateConfig({ image: undefined }); requestAnimationFrame(() => imageButtonRef.current?.focus()); }
+  function resetEditor() { if (exportPending.current) return; clearImage(); setConfig(createDefaultConfig(templateId)); setEditedFields({}); setMessage(""); }
 
   async function prepareFile(): Promise<File> {
-    if (!canvasRef.current || !canExport || imageImportPending.current || renderedConfig.current !== config) throw new Error("Attendez que l’aperçu soit prêt et vérifiez vos champs.");
-    const blob = await canvasBlob(canvasRef.current, kind);
+    if (!canExport || imageImportPending.current) throw new Error("Vérifiez vos champs et votre image avant de télécharger.");
+    // This canvas belongs to the click's config, never to an older preview.
+    const canvas = document.createElement("canvas");
+    const rendered = await renderPoster(canvas, config);
+    if (!mountedRef.current) throw new Error("La création a été fermée.");
+    if (rendered.error || !rendered.fits) throw new Error(rendered.error ?? "Le texte ne tient pas dans ce format. Raccourcissez-le ou choisissez un autre format.");
+    const blob = await canvasBlob(canvas, kind);
     if (blob.size > MAX_EXPORT_BYTES) throw new Error("Cette image est trop volumineuse. Essayez le format JPEG.");
     return new File([blob], `studio-${templateId}-${config.formatId}.${kind === "jpeg" ? "jpg" : "png"}`, { type: blob.type });
   }
 
   async function download() {
+    if (exportPending.current) return;
+    exportPending.current = true;
     setBusy(true); setMessage("");
     try {
       const file = await prepareFile();
@@ -318,7 +326,7 @@ function Editor({ templateId, onBack }: { templateId: TemplateId; onBack: () => 
       setResultOpen(true);
       notify("Votre image est prête. Le téléchargement a été lancé.");
     } catch (error) { if (mountedRef.current) notify(error instanceof Error ? error.message : "Le téléchargement a échoué. Réessayez.", true); }
-    finally { if (mountedRef.current) setBusy(false); }
+    finally { exportPending.current = false; if (mountedRef.current) setBusy(false); }
   }
 
   return <>
@@ -337,8 +345,8 @@ function Editor({ templateId, onBack }: { templateId: TemplateId; onBack: () => 
               <figcaption>{config.image.name}</figcaption>
             </figure> : null}
             <div className="image-import-actions">
-              <Button ref={imageButtonRef} type="button" variant="outline" onClick={() => imageInputRef.current?.click()} aria-describedby={`image-help${imageError ? " image-error" : ""}`}><Upload className="size-4" aria-hidden="true" />{config.image ? "Remplacer l’image" : "Ajouter mon image"}</Button>
-              {config.image || imageImporting ? <Button type="button" variant="ghost" onClick={removeImage}><Trash2 className="size-4" aria-hidden="true" />{config.image ? "Supprimer l’image" : "Annuler l’import"}</Button> : null}
+              <Button ref={imageButtonRef} type="button" variant="outline" disabled={busy} onClick={() => imageInputRef.current?.click()} aria-describedby={`image-help${imageError ? " image-error" : ""}`}><Upload className="size-4" aria-hidden="true" />{config.image ? "Remplacer l’image" : "Ajouter mon image"}</Button>
+              {config.image || imageImporting ? <Button type="button" variant="ghost" disabled={busy} onClick={removeImage}><Trash2 className="size-4" aria-hidden="true" />{config.image ? "Supprimer l’image" : "Annuler l’import"}</Button> : null}
             </div>
             <p id="image-help" className="field-hint">{IMAGE_IMPORT_HELP} L’image est recadrée automatiquement selon le format.</p>
             {imageImporting ? <p className="field-hint" role="status"><LoaderCircle className="mr-2 inline size-4 animate-spin" aria-hidden="true" />Préparation de votre image…</p> : null}
@@ -347,22 +355,22 @@ function Editor({ templateId, onBack }: { templateId: TemplateId; onBack: () => 
           <div className="editor-divider"><p className="option-label" id="palette-label">Votre couleur</p><div className="palette-scroll"><div className="palette-group" role="group" aria-labelledby="palette-label">{PALETTES.map((palette) => <button key={palette.id} className="palette-button" aria-pressed={config.paletteId === palette.id} onClick={() => updateConfig({ paletteId: palette.id })}><span className="palette-content"><span className="palette-swatch" aria-hidden="true" style={{ background: palette.background }} /><span className="palette-button-label">{palette.label}</span></span><SelectionCheck /></button>)}</div></div></div>
           <div><p className="option-label" id="variant-label">Votre composition</p><div className="variant-group" role="group" aria-labelledby="variant-label"><button className="variant-button" aria-pressed={config.variant === "classic"} onClick={() => updateConfig({ variant: "classic" })}><span className="selection-label">Classique</span><SelectionCheck /></button><button className="variant-button" aria-pressed={config.variant === "bold"} onClick={() => updateConfig({ variant: "bold" })}><span className="selection-label">Affirmée</span><SelectionCheck /></button></div></div>
           <p className="field-hint flex items-start gap-2"><LockKeyhole size={12} className="mt-0.5 shrink-0" aria-hidden="true" />La mise en page et la mention de provenance restent intégrées au modèle.</p>
-          <Button variant="ghost" size="sm" onClick={resetEditor}>Revenir au modèle de départ</Button>
+          <Button variant="ghost" size="sm" disabled={busy} onClick={resetEditor}>Revenir au modèle de départ</Button>
         </div>
       </section>
       <section className="preview-panel" aria-labelledby="preview-heading">
-        <div className="preview-toolbar"><h2 className="preview-label" id="preview-heading"><span className="local-dot" />Votre aperçu</h2><span className="preview-status">{status.ready && !imageImporting ? <><Check size={16} aria-hidden="true" />{Object.keys(validation).length ? Object.keys(errors).length ? "Champs à vérifier" : "Ajoutez votre citation" : missingImage ? "Ajoutez votre image" : status.fits ? "À jour" : "Texte à raccourcir"}</> : <><LoaderCircle size={16} className="animate-spin" aria-hidden="true" />Préparation…</>}</span></div>
+        <div className="preview-toolbar"><h2 className="preview-label" id="preview-heading"><span className="local-dot" />Votre aperçu</h2><span className="preview-status">{!imageImporting ? <><Check size={16} aria-hidden="true" />{Object.keys(validation).length ? Object.keys(errors).length ? "Champs à vérifier" : "Ajoutez votre citation" : missingImage ? "Ajoutez votre image" : renderBlocked ? currentStatus?.error ? "Aperçu indisponible" : "Texte à raccourcir" : "Aperçu en direct"}</> : <><LoaderCircle size={16} className="animate-spin" aria-hidden="true" />Préparation de l’image…</>}</span></div>
         <div className="format-group mb-4" role="group" aria-label="Format du visuel">{FORMATS.map((item) => { const Icon = FORMAT_ICONS[item.id]; return <button key={item.id} className="format-button" aria-pressed={config.formatId === item.id} onClick={() => updateConfig({ formatId: item.id as FormatId })}><span className="selection-content"><Icon size={16} aria-hidden="true" /><span className="selection-label">{item.label}</span></span><SelectionCheck /></button>; })}</div>
-        <div className={`preview-stage is-${config.formatId}`}><PosterPreview config={config} canvasRef={canvasRef} onStatus={onStatus} /></div>
+        <div className={`preview-stage is-${config.formatId}`}><PosterPreview config={config} onStatus={onStatus} /></div>
         <div className="preview-metadata"><span>{format.width} × {format.height} px</span><span>Image haute résolution</span></div>
         <div className="export-panel">
           <Select value={kind} onValueChange={(value) => setKind(value as "png" | "jpeg")}><SelectTrigger className="export-type h-11" aria-label="Type de fichier"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="png">PNG</SelectItem><SelectItem value="jpeg">JPEG</SelectItem></SelectContent></Select>
           <Button ref={downloadRef} className="export-button" aria-describedby={exportHelp ? "export-help" : undefined} disabled={!canExport || busy} onClick={download}>{busy ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : <Download className="size-4" aria-hidden="true" />}Télécharger mon visuel</Button>
         </div>
         {exportHelp ? <p id="export-help" className="export-note">{exportHelp}</p> : null}
-        {status.error && Object.keys(validation).length === 0 && !missingImage ? <p role="alert" className="notice error">{status.error}</p> : null}
+        {currentStatus?.error && Object.keys(validation).length === 0 && !missingImage ? <p role="alert" className="notice error">{currentStatus.error}</p> : null}
         {Object.keys(errors).length > 0 ? <div className="notice error" role="alert"><p>Corrigez les champs suivants avant de télécharger votre visuel :</p><ul className="mt-2 list-disc pl-5">{template.fields.filter((field) => errors[field.key]).map((field) => <li key={field.key}><a href={`#field-${field.key}`} onClick={(event) => { event.preventDefault(); document.getElementById(`field-${field.key}`)?.focus(); }}>{field.label} : {errors[field.key]}</a></li>)}</ul></div> : null}
-        {status.ready && !status.fits && !status.error && Object.keys(validation).length === 0 ? <p className="notice error" role="alert">Le texte ne tient pas dans ce format. Raccourcissez-le ou choisissez un autre format.</p> : null}
+        {currentStatus?.ready && !currentStatus.fits && !currentStatus.error && Object.keys(validation).length === 0 ? <p className="notice error" role="alert">Le texte ne tient pas dans ce format. Raccourcissez-le ou choisissez un autre format.</p> : null}
         {message ? <p className={`notice${messageError ? " error" : ""}`} role={messageError ? "alert" : "status"}>{message}</p> : null}
       </section>
     </div>

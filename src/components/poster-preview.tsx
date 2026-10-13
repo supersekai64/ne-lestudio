@@ -57,9 +57,8 @@ function usePreviewResolution(ref: RefObject<HTMLDivElement | null>) {
   return resolution;
 }
 
-export function PosterPreview({ config, canvasRef, onStatus, decorative = false }: {
+export function PosterPreview({ config, onStatus, decorative = false }: {
   config: PosterConfig;
-  canvasRef?: RefObject<HTMLCanvasElement | null>;
   onStatus?: (status: PreviewStatus) => void;
   decorative?: boolean;
 }) {
@@ -67,31 +66,11 @@ export function PosterPreview({ config, canvasRef, onStatus, decorative = false 
   const displayRef = useRef<HTMLCanvasElement>(null);
   const resolution = usePreviewResolution(containerRef);
   const [renderedPreview, setRenderedPreview] = useState<RenderedPreview | null>(null);
-  const [renderedExport, setRenderedExport] = useState<RenderedPoster | null>(null);
   const format = FORMATS.find((item) => item.id === config.formatId)!;
   const currentPreview = renderedPreview?.config === config ? renderedPreview : null;
-  const loading = !currentPreview || currentPreview.resolution !== resolution;
+  // Keep the previous bitmap visible while its replacement is prepared.
+  const loading = !renderedPreview;
   const failed = currentPreview?.failed ?? false;
-
-  // Only the editor needs an export canvas, always at the format's native size.
-  // Resizing a preview never regenerates or changes the downloadable bitmap.
-  useEffect(() => {
-    if (!canvasRef) return;
-    let cancelled = false;
-    const staging = document.createElement("canvas");
-    renderPoster(staging, config).then((result) => {
-      if (cancelled) return;
-      canvasRef.current = staging;
-      setRenderedExport({ config, result, failed: false });
-    }).catch(() => {
-      if (cancelled) return;
-      setRenderedExport({ config, failed: true, result: { fits: false, error: PREVIEW_ERROR, altText: describePoster(config) } });
-    });
-    return () => {
-      cancelled = true;
-      if (canvasRef.current === staging) canvasRef.current = null;
-    };
-  }, [config, canvasRef]);
 
   useEffect(() => {
     if (!resolution) return;
@@ -116,25 +95,19 @@ export function PosterPreview({ config, canvasRef, onStatus, decorative = false 
 
   useEffect(() => {
     if (!onStatus) return;
-    const native = renderedExport?.config === config ? renderedExport : null;
     const preview = renderedPreview?.config === config ? renderedPreview : null;
-    if (!native || !preview) {
+    if (!preview) {
       onStatus({ ready: false, fits: true, altText: describePoster(config) });
-    } else if (native.failed || preview.failed) {
+    } else if (preview.failed) {
       onStatus({ ready: false, fits: false, error: PREVIEW_ERROR, altText: describePoster(config) });
     } else {
-      onStatus({
-        ...native.result,
-        fits: native.result.fits && preview.result.fits,
-        error: native.result.error ?? preview.result.error,
-        ready: true,
-      });
+      onStatus({ ...preview.result, ready: true });
     }
-  }, [config, renderedExport, renderedPreview, onStatus]);
+  }, [config, renderedPreview, onStatus]);
 
   return (
     <div ref={containerRef} className="preview-container" style={{ aspectRatio: `${format.width} / ${format.height}` }}>
-      <canvas ref={displayRef} className="poster-canvas" width={format.width} height={format.height}
+      <canvas ref={displayRef} className="poster-canvas"
         role={decorative ? undefined : "img"} aria-hidden={decorative || undefined}
         aria-label={decorative ? undefined : describePoster(config)}>
         {decorative ? null : describePoster(config)}
