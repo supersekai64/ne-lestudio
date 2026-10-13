@@ -50,4 +50,4 @@ npm.cmd run start
 
 Les captures et rapports locaux restent dans `artifacts/`, exclu de Git avec les dépendances, les builds, les caches et les fichiers d’environnement. Les ressources dans `public/` et `package-lock.json` sont destinés à être versionnés.
 
-Avant publication, compléter le contact `[A VENIR]` dans les mentions légales, finaliser l’identification de l’éditeur et vérifier les droits d’utilisation des ressources graphiques.
+Avant publication, compléter le contact `[A VENIR]` dans les mentions légales.
