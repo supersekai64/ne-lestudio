@@ -1,0 +1,29 @@
+# Dépendances
+node_modules/
+
+# Builds et caches
+/.next/
+/out/
+/dist/
+/coverage/
+*.tsbuildinfo
+/next-env.d.ts
+
+# Configuration locale et secrets
+.env*
+!.env.example
+/.vercel/
+*.pem
+*.key
+
+# Rapports et fichiers de travail
+/artifacts/
+/test-results/
+/playwright-report/
+*.log
+
+# Fichiers système et éditeur
+.DS_Store
+Thumbs.db
+Desktop.ini
+/.idea/

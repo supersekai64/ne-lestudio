@@ -1,0 +1,123 @@
+{
+  "palette": {
+    "navy": "#032F67",
+    "khaki": "#A0A37E",
+    "white": "#FFFFFF",
+    "textureKhaki": "#B5B389"
+  },
+  "notes": [
+    "Colors observed in supplied PNG logos and 2025 textures.",
+    "Tango titles and Tubqal body are implementation choices; no written typography usage guide was supplied.",
+    "Original source folders were removed after integration; source paths and recorded checksums are retained as historical provenance."
+  ],
+  "files": [
+    {
+      "source": "kit-logo/Kit Logo/logo-official.png",
+      "target": "public/brand/logo-official.png",
+      "bytes": 27890,
+      "sha256": "d87f35ce018b35b26212eb166f239fb2a8aee3a4a5b0a10039841d3dff19430a"
+    },
+    {
+      "source": "kit-logo/Kit Logo/logo-blanc-bleu.png",
+      "target": "public/brand/logo-blanc-bleu.png",
+      "bytes": 29457,
+      "sha256": "521de016079f8426b5472e6b1e653cf237466963493ddcdd653de1ea2289c188"
+    },
+    {
+      "source": "kit-logo/Kit Logo/logo-full-blanc.png",
+      "target": "public/brand/logo-full-blanc.png",
+      "bytes": 8851,
+      "sha256": "165c32a8e8a87c6c26f524501ea6ab0731fe8fd593785e11c0d68e760d6bbacb"
+    },
+    {
+      "source": "charte-graphique-2025/texture-fine-blanc.png",
+      "target": "public/brand/texture-fine-blanc.png",
+      "bytes": 56079,
+      "sha256": "d55784022429f27a01cbf9f3c8cdb3c31172fb004bfce1749b5fac862dc2ad6c"
+    },
+    {
+      "source": "charte-graphique-2025/texture-fine-bleu.png",
+      "target": "public/brand/texture-fine-bleu.png",
+      "bytes": 53778,
+      "sha256": "f4c2bc10043c12964e2370b04a168a39d9eed9271fd4f27d276d79fa455e4c3f"
+    },
+    {
+      "source": "charte-graphique-2025/texture-fine-kaki.png",
+      "target": "public/brand/texture-fine-kaki.png",
+      "bytes": 54094,
+      "sha256": "7aff11b71b39d644215ebfeb6ea420728ce1245046b14632ebb436fa0dbf31fd"
+    },
+    {
+      "source": "charte-graphique-2025/texture-bold-bleu.png",
+      "target": "public/brand/texture-bold-bleu.png",
+      "bytes": 26139,
+      "sha256": "ac73281b6bd21a6b92ba9f31e7f79db734bc9a02ea249c848a502c8e0109430f"
+    },
+    {
+      "source": "charte-graphique-2025/texture-bold-kaki.png",
+      "target": "public/brand/texture-bold-kaki.png",
+      "bytes": 25980,
+      "sha256": "41edce87a1e8d67994c9b2c148508419399732df1374b5a59177449267e5a00e"
+    },
+    {
+      "source": "charte-graphique-2025/texture-kick-blanc.png",
+      "target": "public/brand/texture-kick-blanc.png",
+      "bytes": 24889,
+      "sha256": "e2142a1416bd986a92b1d35b79c4b7b1192a12f5ce31a63813a1fc0782adedd4"
+    },
+    {
+      "source": "charte-graphique-2025/texture-kick-bleu.png",
+      "target": "public/brand/texture-kick-bleu.png",
+      "bytes": 20644,
+      "sha256": "d2407f21f1b32f74cdc5cfa12e59ed28445bc0e2b32766f719941b0529362304"
+    },
+    {
+      "source": "charte-graphique-2025/texture-kick-kaki.png",
+      "target": "public/brand/texture-kick-kaki.png",
+      "bytes": 24747,
+      "sha256": "e0d21d7249b16f63ea57e529b36aa800a6b858179499c74e92266c76b8ebf1fc"
+    },
+    {
+      "source": "charte-graphique-2025/fonts/tubqal/Tubqal-Pro-Regular.otf",
+      "target": "public/fonts/tubqal-regular.otf",
+      "bytes": 103796,
+      "sha256": "bd3cfa059afcd53732ebbf9d0bfebe500f04cdae6f4df38525f9b24051e319b9"
+    },
+    {
+      "source": "charte-graphique-2025/fonts/tubqal/Tubqal-Pro-Medium.otf",
+      "target": "public/fonts/tubqal-medium.otf",
+      "bytes": 105076,
+      "sha256": "9f7ad0c97f00ba6c1db47c5c6b47741de562c2f28029566b3fd64efa93453928"
+    },
+    {
+      "source": "charte-graphique-2025/fonts/tubqal/Tubqal-Pro-SemiBold.otf",
+      "target": "public/fonts/tubqal-semibold.otf",
+      "bytes": 105768,
+      "sha256": "6289c7460395162bbe6b9ba69756b261f7ca794d91ebc568a103e99990b8b326"
+    },
+    {
+      "source": "charte-graphique-2025/fonts/tubqal/Tubqal-Pro-Bold.otf",
+      "target": "public/fonts/tubqal-bold.otf",
+      "bytes": 106464,
+      "sha256": "0ca50378607251bc6298b4f60d58d5714d4bc19868855dcb73e36f75f8b02335"
+    },
+    {
+      "source": "charte-graphique-2025/fonts/tubqal/Tubqal-Pro-ExtraBold.otf",
+      "target": "public/fonts/tubqal-extrabold.otf",
+      "bytes": 102152,
+      "sha256": "e0c2d5dcca7be4304f7a1021244e37491e9947719728bc1cb5f762a0550a238a"
+    },
+    {
+      "source": "charte-graphique-2025/fonts/tango-sans-font/TangoSans-1Ge1e.ttf",
+      "target": "public/fonts/tango-regular.ttf",
+      "bytes": 19764,
+      "sha256": "12f9205c02f2f0daecaa5aff96c81aaa50665fec68bffb7bafd842883cfb8163"
+    },
+    {
+      "source": "charte-graphique-2025/fonts/tango-sans-font/TangoSansBold-9YW2y.ttf",
+      "target": "public/fonts/tango-bold.ttf",
+      "bytes": 24368,
+      "sha256": "07a61c448471c1f77f5596d52201ce092ad5a65a5d6f26c991147c2f5ef16f69"
+    }
+  ]
+}
