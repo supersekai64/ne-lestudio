@@ -92,7 +92,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 .template-caption p { margin: 0; font-size: .875rem; color: var(--muted-foreground); line-height: 1.6; }
 .card-arrow { border-radius: 50%; border: 1px solid var(--border); display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; transition: background-color .2s, transform .2s; }
 .template-tag { display: inline-block; max-width: 100%; margin: 0 0 .875rem; background: #fff; color: var(--brand-navy); border-radius: 100px; padding: .3125rem .625rem; font-size: .875rem; line-height: 1.5; letter-spacing: .01em; font-weight: 700; }
-.poster-canvas { width: 100%; height: auto; display: block; }
+.poster-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .poster-loading { position: absolute; inset: 0; background: #efefeb; display: flex; align-items: center; justify-content: center; padding: 1rem; color: var(--brand-navy); font-size: .875rem; line-height: 1.5; }
 .preview-container { position: relative; width: 100%; }
 .gallery-note { margin-top: 2.125rem; display: flex; align-items: start; gap: .625rem; padding: 1rem 1.25rem; border-radius: .625rem; background: #e2e0d8; color: var(--brand-navy); font-size: .875rem; line-height: 1.7; }
@@ -152,8 +152,9 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 .format-button { position: relative; min-width: 0; border: 1px solid var(--border); background: #fff; border-radius: .5rem; padding: .625rem .5rem; color: var(--brand-navy); font-size: 1rem; line-height: 1.5; min-height: 48px; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: center; }
 .format-button[aria-pressed="true"] { color: var(--brand-navy); border-color: var(--brand-navy); background: #eef2f6; box-shadow: inset 0 0 0 1px var(--brand-navy); }
 .preview-stage { padding: 1.75rem; border-radius: .875rem; background-color: #e2e0d8; background-image: radial-gradient(#a0a37e4f .7px, transparent .7px); background-size: 10px 10px; display: flex; justify-content: center; align-items: center; min-height: 250px; }
-.preview-stage .preview-container { width: min(100%, 400px); }
-.preview-stage.is-story .preview-container { width: min(100%, 278px); }
+.preview-stage .preview-container { width: min(100%, 560px); }
+.preview-stage.is-portrait .preview-container { width: min(100%, 448px); }
+.preview-stage.is-story .preview-container { width: min(100%, 320px); }
 .preview-stage.is-landscape .preview-container { width: 100%; }
 .preview-stage .poster-canvas { box-shadow: 0 10px 35px #1c334527; }
 .preview-metadata { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem .75rem; margin: .75rem .125rem 1.3125rem; font-size: .875rem; line-height: 1.5; color: var(--muted-foreground); }
@@ -213,8 +214,9 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   .footer-links { width: 100%; gap: .5rem 1rem; }
   .editor-top { margin-top: 1rem; margin-bottom: 1rem; }
   .preview-stage { padding: 1.25rem; }
-  .preview-stage .preview-container { width: min(100%,275px); }
-  .preview-stage.is-story .preview-container { width: min(100%,185px); }
+  .preview-stage .preview-container { width: min(100%,320px); }
+  .preview-stage.is-portrait .preview-container { width: min(100%,256px); }
+  .preview-stage.is-story .preview-container { width: min(100%,220px); }
   .preview-metadata { margin-bottom: 1rem; }
   .export-panel { padding: .875rem; }
   .editor-panel-heading, .editor-fields { padding: 1.25rem; }

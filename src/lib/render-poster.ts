@@ -1,5 +1,6 @@
 import { describePoster, formatEventDate, FORMATS, PALETTES, POSTER_WEBSITE_URL, TEMPLATES } from "./catalog";
 import type { PaletteDefinition, PosterConfig, RenderResult } from "./studio-types";
+import type { PreviewResolution } from "./preview-resolution";
 
 const BODY_FONT = '"Tubqal Pro", Arial, sans-serif';
 const DISPLAY_FONT = '"Tango Sans", Arial, sans-serif';
@@ -260,7 +261,7 @@ function drawImagePlaceholder(ctx: CanvasRenderingContext2D, box: Box) {
   });
 }
 
-export async function renderPoster(canvas: HTMLCanvasElement, config: PosterConfig): Promise<RenderResult> {
+export async function renderPoster(canvas: HTMLCanvasElement, config: PosterConfig, resolution?: PreviewResolution): Promise<RenderResult> {
   const version = (renderVersions.get(canvas) ?? 0) + 1;
   renderVersions.set(canvas, version);
   const format = FORMATS.find((entry) => entry.id === config.formatId) ?? FORMATS[0];
@@ -298,10 +299,17 @@ export async function renderPoster(canvas: HTMLCanvasElement, config: PosterConf
   }
   const altText = describePoster(config);
   if (renderVersions.get(canvas) !== version) return { fits: !errors.length, ...(errors.length ? { error: errors[0] } : {}), altText };
-  canvas.width = format.width;
-  canvas.height = format.height;
+  canvas.width = resolution?.pixelWidth ?? format.width;
+  canvas.height = resolution?.pixelHeight ?? format.height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return { fits: false, error: "Votre navigateur ne permet pas de créer ce visuel.", altText };
+  // Draw text and shapes at the screen's actual density instead of scaling an
+  // export bitmap in CSS. Layout and font fitting keep their format coordinates.
+  ctx.setTransform(canvas.width / format.width, 0, 0, canvas.height / format.height, 0, 0);
+  if (resolution) {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+  }
   const w = format.width;
   const h = format.height;
   const wide = w > h;
