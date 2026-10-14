@@ -1,6 +1,6 @@
 # Le Studio
 
-Générateur de visuels pour les réseaux sociaux, développé par Paul CORNILLAD. Initiative personnelle non officielle, actuellement non soutenue par le parti Nouvelle Énergie.
+Générateur de visuels pour les réseaux sociaux. Initiative personnelle non officielle, actuellement non soutenue par le parti Nouvelle Énergie.
 
 Stack : Next.js, React, TypeScript, Tailwind CSS et shadcn/ui (Radix).
 
