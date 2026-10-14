@@ -1,6 +1,7 @@
 import { describePoster, formatEventDate, FORMATS, PALETTES, POSTER_WEBSITE_URL, TEMPLATES } from "./catalog";
 import type { PaletteDefinition, PosterConfig, RenderResult } from "./studio-types";
 import type { PreviewResolution } from "./preview-resolution";
+import { drawBrandLogo } from "./brand-logo";
 
 const BODY_FONT = '"Tubqal Pro", Arial, sans-serif';
 const DISPLAY_FONT = '"Tango Sans", Arial, sans-serif';
@@ -166,18 +167,6 @@ function line(ctx: CanvasRenderingContext2D, x: number, y: number, width: number
   ctx.restore();
 }
 
-function drawBrand(ctx: CanvasRenderingContext2D, image: HTMLImageElement | undefined, x: number, y: number, wide: boolean) {
-  if (!image) return;
-  const frameWidth = wide ? 130 : 172;
-  const frameHeight = wide ? 112 : 149;
-  const scale = Math.min(frameWidth / image.naturalWidth, frameHeight / image.naturalHeight);
-  const width = image.naturalWidth * scale;
-  const height = image.naturalHeight * scale;
-  ctx.save();
-  ctx.drawImage(image, x + (frameWidth - width) / 2, y + (frameHeight - height) / 2, width, height);
-  ctx.restore();
-}
-
 function background(ctx: CanvasRenderingContext2D, width: number, height: number, palette: PaletteDefinition, bold: boolean, texture: HTMLImageElement | undefined) {
   ctx.fillStyle = palette.background;
   ctx.fillRect(0, 0, width, height);
@@ -280,15 +269,12 @@ export async function renderPoster(canvas: HTMLCanvasElement, config: PosterConf
     if (value("time") && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value("time"))) errors.push("Choisissez une heure valide.");
   }
   await waitForFonts();
-  const logoPath = palette.id === "cream" ? "/brand/logo-blanc-bleu.png" : palette.id === "olive" ? "/brand/logo-full-blanc.png" : "/brand/logo-official.png";
   const textureFamily = config.variant === "bold" ? (config.templateId === "headline" || config.templateId === "type" ? "kick" : "bold") : "fine";
   const textureColor = palette.id === "cream" ? "bleu" : palette.id === "olive" && textureFamily !== "bold" ? "blanc" : "kaki";
   // The source kit has no white diagonal texture: use its unchanged blue variant on kaki.
   const texturePath = `/brand/texture-${textureFamily}-${palette.id === "olive" && textureFamily === "bold" ? "bleu" : textureColor}.png`;
-  const brandResources = await Promise.allSettled([loadImage(logoPath), loadImage(texturePath)]);
-  const logo = brandResources[0].status === "fulfilled" ? brandResources[0].value : undefined;
-  const texture = brandResources[1].status === "fulfilled" ? brandResources[1].value : undefined;
-  if (!logo || !texture) errors.push("Une ressource de la charte n’a pas pu être chargée. Réessayez dans un instant.");
+  const texture = await loadImage(texturePath).catch(() => undefined);
+  if (!texture) errors.push("Une ressource de la charte n’a pas pu être chargée. Réessayez dans un instant.");
   let photo: HTMLImageElement | undefined;
   if (template.photo) {
     if (!config.image?.src) errors.unshift("Ajoutez votre image pour créer ce visuel.");
@@ -320,7 +306,7 @@ export async function renderPoster(canvas: HTMLCanvasElement, config: PosterConf
   const body: Box = { x: pad, y: contentTop, width: w - 2 * pad, height: h - contentTop - (story ? 290 : wide ? 115 : 140) };
   const bold = config.variant === "bold";
   background(ctx, w, h, palette, bold, texture);
-  drawBrand(ctx, logo, pad, logoY, wide);
+  drawBrandLogo(ctx, pad, logoY, wide, palette);
   const drawText = (key: string, text: string, box: Box, options: TextOptions) => {
     const fits = drawFittedText(ctx, text, box, { color: palette.foreground, ...options });
     if (!fits) errors.push(`Le champ « ${key} » ne tient pas dans ce format. Raccourcissez le texte ou réduisez les retours à la ligne.`);
