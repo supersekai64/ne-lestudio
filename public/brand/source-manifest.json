@@ -23,6 +23,16 @@
       "checksumNormalization": "LF (canonical Git text content)"
     },
     {
+      "source": "https://www.unenouvelleenergie.fr/logo.svg",
+      "retrieved": "2026-10-14",
+      "sourceSha256": "09d7c11f12ab719b47dd747068b6560aa689c6b2c57ce2ebdbc8eea92d4698a2",
+      "target": "public/brand/logo-blanc-bleu.svg",
+      "bytes": 10419,
+      "sha256": "928a9f62286989bb968251384ccf1d6d48a7c416664a8dfd8f602e1396f7fcfe",
+      "checksumNormalization": "LF (canonical Git text content)",
+      "transformation": "Same 29 official vector paths and original clip rectangle; header fills use the existing blue and khaki brand colors."
+    },
+    {
       "source": "kit-logo/Kit Logo/logo-official.png",
       "target": "public/brand/logo-official.png",
       "bytes": 27890,

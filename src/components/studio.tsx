@@ -147,7 +147,7 @@ export function Studio() {
     <div ref={shellRef} className="studio-shell">
       <header className="studio-header">
         <button className="brand" onClick={() => navigate(null)}>
-          <img className="brand-logo" src="/brand/logo-blanc-bleu.png" width={58} height={50} alt="" />
+          <img className="brand-logo" src="/brand/logo-blanc-bleu.svg" width={58} height={50} alt="" />
           <span><span className="brand-name">Le Studio</span><span className="brand-subtitle block">Générateur de visuels</span></span>
           <span className="sr-only"> — retour aux modèles</span>
         </button>
