@@ -17,9 +17,10 @@
       "retrieved": "2026-10-14",
       "sourceSha256": "09d7c11f12ab719b47dd747068b6560aa689c6b2c57ce2ebdbc8eea92d4698a2",
       "target": "src/lib/brand-logo-paths.json",
-      "bytes": 11003,
-      "sha256": "882eed106061da7cb2842a903699aa8d3ee239081cd84d7a2d41d6e10fd4ec72",
-      "transformation": "SVG path data copied verbatim; fills represented by wordmark/detail roles and the original clip rectangle retained."
+      "bytes": 10879,
+      "sha256": "c6b3b8fd82f6d1c9579d7866f899c12f4def3dfe2b1e2120f59e417b31019aab",
+      "transformation": "SVG path data copied verbatim; fills represented by wordmark/detail roles and the original clip rectangle retained.",
+      "checksumNormalization": "LF (canonical Git text content)"
     },
     {
       "source": "kit-logo/Kit Logo/logo-official.png",
