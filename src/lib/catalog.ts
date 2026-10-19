@@ -21,6 +21,14 @@ export const PALETTES: PaletteDefinition[] = [
   { id: "olive", label: "Kaki", background: "#A0A37E", foreground: "#032F67", accent: "#FFFFFF" },
 ];
 
+export const ACCENT_COLORS = PALETTES.map((palette) => ({ id: palette.id, label: palette.label, color: palette.background }));
+
+export function resolveAccent(config: Pick<PosterConfig, "paletteId" | "accentId">): string {
+  const palette = PALETTES.find((entry) => entry.id === config.paletteId) ?? PALETTES[0];
+  const chosen = ACCENT_COLORS.find((entry) => entry.id === config.accentId && entry.color !== palette.background);
+  return chosen?.color ?? palette.accent;
+}
+
 export const TEMPLATES: TemplateDefinition[] = [
   {
     id: "headline", name: "Une idée forte", category: "Message", tag: "L’essentiel",

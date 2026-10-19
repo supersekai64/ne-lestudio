@@ -51,9 +51,15 @@ export interface PosterConfig {
   templateId: TemplateId;
   formatId: FormatId;
   paletteId: PaletteId;
+  // Overrides the palette accent (date panel, source panel, rules); unset = palette default.
+  accentId?: PaletteId;
   variant: "classic" | "bold";
   values: PosterValues;
   image?: PosterImage;
+  // Replaces the Nouvelle Énergie logo on the poster when set.
+  logo?: PosterImage;
+  // Footer line; undefined = site URL, empty string = no footer.
+  footerText?: string;
 }
 
 export interface RenderResult {

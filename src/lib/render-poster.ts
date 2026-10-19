@@ -1,4 +1,4 @@
-import { describePoster, formatEventDate, FORMATS, PALETTES, POSTER_WEBSITE_URL, TEMPLATES } from "./catalog";
+import { describePoster, resolveAccent, formatEventDate, FORMATS, PALETTES, POSTER_WEBSITE_URL, TEMPLATES } from "./catalog";
 import type { PaletteDefinition, PosterConfig, RenderResult } from "./studio-types";
 import type { PreviewResolution } from "./preview-resolution";
 import { drawBrandLogo } from "./brand-logo";
@@ -148,14 +148,14 @@ function panel(ctx: CanvasRenderingContext2D, box: Box, color: string, radius = 
   ctx.restore();
 }
 
-function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color: string, size = 16) {
+function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color: string, size = 16, maxWidth?: number) {
   ctx.save();
   setFont(ctx, size, 700);
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
   const metrics = ctx.measureText(text);
   const topInset = Number.isFinite(metrics.actualBoundingBoxAscent) ? Math.max(0, metrics.actualBoundingBoxAscent) : 0;
-  ctx.fillText(text, x, y + topInset);
+  ctx.fillText(text, x, y + topInset, maxWidth);
   ctx.restore();
 }
 
@@ -180,10 +180,26 @@ function background(ctx: CanvasRenderingContext2D, width: number, height: number
   ctx.restore();
 }
 
-function drawFooter(ctx: CanvasRenderingContext2D, width: number, height: number, pad: number, palette: PaletteDefinition) {
+function drawFooter(ctx: CanvasRenderingContext2D, width: number, height: number, pad: number, palette: PaletteDefinition, text: string) {
+  if (!text) return;
   const y = height - (height / width > 1.6 ? 210 : width > height ? 52 : 65);
   line(ctx, pad, y - 23, width - 2 * pad, palette.foreground, 0.3, 1);
-  label(ctx, POSTER_WEBSITE_URL, pad, y, palette.foreground, height / width > 1.6 ? 34 : 30);
+  let size = height / width > 1.6 ? 34 : 30;
+  ctx.save();
+  // Shrink long custom footers instead of letting fillText squash the glyphs.
+  for (; size > 16; size -= 1) { setFont(ctx, size, 700); if (ctx.measureText(text).width <= width - 2 * pad) break; }
+  ctx.restore();
+  label(ctx, text, pad, y, palette.foreground, size, width - 2 * pad);
+}
+
+// Fits the logo inside the official logo frame, anchored top-left like the brand mark.
+function drawCustomLogo(ctx: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, wide: boolean) {
+  const frameWidth = wide ? 260 : 340;
+  const frameHeight = wide ? 112 : 149;
+  const scale = Math.min(frameWidth / image.naturalWidth, frameHeight / image.naturalHeight);
+  const w = image.naturalWidth * scale;
+  const h = image.naturalHeight * scale;
+  ctx.drawImage(image, x, y + (frameHeight - h) / 2, w, h);
 }
 
 function waitForFonts(): Promise<void> {
@@ -255,7 +271,10 @@ export async function renderPoster(canvas: HTMLCanvasElement, config: PosterConf
   renderVersions.set(canvas, version);
   const format = FORMATS.find((entry) => entry.id === config.formatId) ?? FORMATS[0];
   const template = TEMPLATES.find((entry) => entry.id === config.templateId) ?? TEMPLATES[0];
-  const palette = PALETTES.find((entry) => entry.id === config.paletteId) ?? PALETTES[0];
+  const basePalette = PALETTES.find((entry) => entry.id === config.paletteId) ?? PALETTES[0];
+  const palette = { ...basePalette, accent: resolveAccent(config) };
+  // Text drawn on accent panels must stay readable on a blue accent.
+  const onAccent = palette.accent === "#032F67" ? "#FFFFFF" : "#032F67";
   const errors: string[] = [];
   const value = (key: string) => typeof config.values[key] === "string" ? config.values[key].replaceAll("\0", "").trim() : "";
   for (const field of template.fields) {
@@ -283,6 +302,11 @@ export async function renderPoster(canvas: HTMLCanvasElement, config: PosterConf
       catch { errors.unshift("Votre image n’a pas pu être chargée. Importez-la à nouveau."); }
     }
   }
+  let customLogo: HTMLImageElement | undefined;
+  if (config.logo?.src) {
+    try { customLogo = await loadImage(config.logo.src); }
+    catch { errors.unshift("Votre logo n’a pas pu être chargé. Importez-le à nouveau."); }
+  }
   const altText = describePoster(config);
   if (renderVersions.get(canvas) !== version) return { fits: !errors.length, ...(errors.length ? { error: errors[0] } : {}), altText };
   canvas.width = resolution?.pixelWidth ?? format.width;
@@ -306,7 +330,9 @@ export async function renderPoster(canvas: HTMLCanvasElement, config: PosterConf
   const body: Box = { x: pad, y: contentTop, width: w - 2 * pad, height: h - contentTop - (story ? 290 : wide ? 115 : 140) };
   const bold = config.variant === "bold";
   background(ctx, w, h, palette, bold, texture);
-  drawBrandLogo(ctx, pad, logoY, wide, palette);
+  // Official logo keeps its own colors whatever accent the user picked.
+  if (customLogo) drawCustomLogo(ctx, customLogo, pad, logoY, wide);
+  else drawBrandLogo(ctx, pad, logoY, wide, basePalette);
   const drawText = (key: string, text: string, box: Box, options: TextOptions) => {
     const fits = drawFittedText(ctx, text, box, { color: palette.foreground, ...options });
     if (!fits) errors.push(`Le champ « ${key} » ne tient pas dans ce format. Raccourcissez le texte ou réduisez les retours à la ligne.`);
@@ -370,7 +396,7 @@ export async function renderPoster(canvas: HTMLCanvasElement, config: PosterConf
     drawText("Une précision", subtitle, { x: body.x, y: body.y + textHeight * 0.73, width: leftWidth, height: textHeight * 0.25 }, { maxSize: story ? 46 : wide ? 36 : 42, minSize: wide ? 20 : 26, weight: 400, lineHeight: 1.15, family: "body" });
     panel(ctx, panelBox, palette.accent, bold ? 5 : 22);
     const inner = wide ? 28 : 34;
-    const panelColor = "#032F67";
+    const panelColor = onAccent;
     label(ctx, "RENDEZ-VOUS", panelBox.x + inner, panelBox.y + inner, panelColor, wide ? 24 : 28);
     const compactDetails = config.formatId === "square";
     const dateWidth = panelBox.width - 2 * inner - (compactDetails ? 244 : 0);
@@ -432,10 +458,10 @@ export async function renderPoster(canvas: HTMLCanvasElement, config: PosterConf
       drawText("Le contexte", subtitle, { x: body.x, y: body.y + body.height * 0.69, width: body.width, height: body.height * 0.12 }, { maxSize: story ? 48 : 44, minSize: 26, weight: 400, lineHeight: 1.16, family: "body" });
     }
     panel(ctx, sourceBox, palette.accent, bold ? 5 : 16);
-    label(ctx, "SOURCE", sourceBox.x + 22, sourceBox.y + 17, "#032F67", 24);
-    drawText("La source", value("source"), { x: sourceBox.x + 130, y: sourceBox.y + 15, width: sourceBox.width - 152, height: sourceBox.height - 28 }, { maxSize: story ? 42 : wide ? 30 : 36, minSize: wide ? 20 : 24, color: "#032F67", weight: 500, lineHeight: 1.14, vertical: "center", family: "body" });
+    label(ctx, "SOURCE", sourceBox.x + 22, sourceBox.y + 17, onAccent, 24);
+    drawText("La source", value("source"), { x: sourceBox.x + 130, y: sourceBox.y + 15, width: sourceBox.width - 152, height: sourceBox.height - 28 }, { maxSize: story ? 42 : wide ? 30 : 36, minSize: wide ? 20 : 24, color: onAccent, weight: 500, lineHeight: 1.14, vertical: "center", family: "body" });
   }
 
-  drawFooter(ctx, w, h, pad, palette);
+  drawFooter(ctx, w, h, pad, palette, (config.footerText ?? POSTER_WEBSITE_URL).trim());
   return { fits: errors.length === 0, ...(errors.length ? { error: errors[0] } : {}), altText };
 }
