@@ -1,4 +1,4 @@
-# Le Studio
+# PostGen
 
 Générateur de visuels pour les réseaux sociaux. Initiative personnelle non officielle, actuellement non soutenue par le parti Nouvelle Énergie.
 
@@ -19,8 +19,10 @@ Ouvrir [http://127.0.0.1:3000](http://127.0.0.1:3000). Aucun compte ni service e
 
 - Six modèles : message, citation libre, événement, image, chiffre et typographie.
 - Quatre formats : carré, portrait, Story et paysage.
-- Trois couleurs et deux compositions.
+- Trois couleurs et deux compositions : « Affirmée » change uniquement le décor de fond et affiche le titre en majuscules. La mise en page, les couleurs et les arrondis restent identiques à « Classique ».
 - Import d’une image personnelle JPG, PNG ou WebP, jusqu’à 10 Mo.
+- Import d’un logo personnel PNG ou SVG, jusqu’à 5 Mo.
+- Calendrier français et sélecteur d’heure sur 24 h avec les composants shadcn/ui : la date est obligatoire et l’heure facultative.
 - Aperçu et téléchargement en PNG ou JPEG.
 
 Les textes et images sont traités dans le navigateur, sans sauvegarde automatique. L’application n’utilise pas de cookies ni de mesure d’audience. L’hébergeur peut traiter des données techniques de connexion.
@@ -30,9 +32,11 @@ L’exploration est interdite à tous les robots via `robots.txt`, avec des dire
 ## Ressources et organisation
 
 - `src/components/` : interface et aperçu.
+- `src/components/ui/date-time-picker.tsx` : calendrier et sélecteur d’heure des événements.
 - `src/lib/catalog.ts` : modèles, textes de départ, formats et couleurs.
 - `src/lib/render-poster.ts` : rendu des visuels.
 - `src/lib/import-image.ts` : préparation des images importées.
+- `src/lib/import-logo.ts` : validation PNG/SVG et préparation des logos importés.
 - `public/brand/` et `public/fonts/` : ressources graphiques utilisées par le site.
 
 Les dossiers graphiques sources ont été supprimés ; ils ne sont pas nécessaires au fonctionnement du site. `public/brand/source-manifest.json` conserve leur origine historique et les empreintes enregistrées lors de l’intégration.
@@ -50,4 +54,4 @@ npm.cmd run start
 
 Les captures et rapports locaux restent dans `artifacts/`, exclu de Git avec les dépendances, les builds, les caches et les fichiers d’environnement. Les ressources dans `public/` et `package-lock.json` sont destinés à être versionnés.
 
-Avant publication, compléter le contact `[A VENIR]` dans les mentions légales.
+Contact : [postgen.ne@gmail.com](mailto:postgen.ne@gmail.com).

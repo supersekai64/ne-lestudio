@@ -56,7 +56,7 @@ export const TEMPLATES: TemplateDefinition[] = [
       { key: "title", label: "Nom de l’événement", type: "textarea", maxLength: 85, placeholder: "Le titre de votre rendez-vous", required: true },
       { key: "subtitle", label: "Une précision", type: "text", maxLength: 85, placeholder: "Le thème ou le programme (facultatif)", required: false },
       { key: "date", label: "Date", type: "date", maxLength: 10, placeholder: "", required: true },
-      { key: "time", label: "Heure", type: "time", maxLength: 5, placeholder: "", required: true },
+      { key: "time", label: "Heure", type: "time", maxLength: 5, placeholder: "", required: false },
       { key: "location", label: "Lieu", type: "textarea", maxLength: 100, placeholder: "Lieu et ville", required: true },
     ],
   },
