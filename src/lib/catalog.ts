@@ -21,6 +21,14 @@ export const PALETTES: PaletteDefinition[] = [
   { id: "olive", label: "Kaki", background: "#A0A37E", foreground: "#032F67", accent: "#FFFFFF" },
 ];
 
+export const ACCENT_COLORS = PALETTES.map((palette) => ({ id: palette.id, label: palette.label, color: palette.background }));
+
+export function resolveAccent(config: Pick<PosterConfig, "paletteId" | "accentId">): string {
+  const palette = PALETTES.find((entry) => entry.id === config.paletteId) ?? PALETTES[0];
+  const chosen = ACCENT_COLORS.find((entry) => entry.id === config.accentId && entry.color !== palette.background);
+  return chosen?.color ?? palette.accent;
+}
+
 export const TEMPLATES: TemplateDefinition[] = [
   {
     id: "headline", name: "Une idée forte", category: "Message", tag: "L’essentiel",
@@ -48,7 +56,7 @@ export const TEMPLATES: TemplateDefinition[] = [
       { key: "title", label: "Nom de l’événement", type: "textarea", maxLength: 85, placeholder: "Le titre de votre rendez-vous", required: true },
       { key: "subtitle", label: "Une précision", type: "text", maxLength: 85, placeholder: "Le thème ou le programme (facultatif)", required: false },
       { key: "date", label: "Date", type: "date", maxLength: 10, placeholder: "", required: true },
-      { key: "time", label: "Heure", type: "time", maxLength: 5, placeholder: "", required: true },
+      { key: "time", label: "Heure", type: "time", maxLength: 5, placeholder: "", required: false },
       { key: "location", label: "Lieu", type: "textarea", maxLength: 100, placeholder: "Lieu et ville", required: true },
     ],
   },

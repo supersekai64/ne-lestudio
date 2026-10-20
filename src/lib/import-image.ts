@@ -199,6 +199,11 @@ export async function importPosterImage(file: File): Promise<PosterImage> {
     throw new Error(DIMENSIONS_TOO_LARGE);
   }
 
+  return normalizePosterImage(file);
+}
+
+/** Re-encode an image after its format-specific validation has succeeded. */
+export async function normalizePosterImage(file: File): Promise<PosterImage> {
   if (typeof document === "undefined" || typeof Image === "undefined" ||
     typeof URL.createObjectURL !== "function") {
     throw new Error("L’import d’images est disponible dans votre navigateur.");

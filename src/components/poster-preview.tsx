@@ -14,7 +14,7 @@ type RenderedPreview = RenderedPoster & { resolution: PreviewResolution };
 
 const PREVIEW_ERROR = "L’aperçu n’a pas pu être créé. Réessayez ou rechargez la page.";
 
-function usePreviewResolution(ref: RefObject<HTMLDivElement | null>) {
+function usePreviewResolution(ref: RefObject<HTMLElement | null>) {
   const [resolution, setResolution] = useState<PreviewResolution | null>(null);
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export function PosterPreview({ config, onStatus, decorative = false }: {
   onStatus?: (status: PreviewStatus) => void;
   decorative?: boolean;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLSpanElement>(null);
   const displayRef = useRef<HTMLCanvasElement>(null);
   const resolution = usePreviewResolution(containerRef);
   const [renderedPreview, setRenderedPreview] = useState<RenderedPreview | null>(null);
@@ -106,15 +106,15 @@ export function PosterPreview({ config, onStatus, decorative = false }: {
   }, [config, renderedPreview, onStatus]);
 
   return (
-    <div ref={containerRef} className="preview-container" style={{ aspectRatio: `${format.width} / ${format.height}` }}>
+    <span ref={containerRef} className="preview-container" style={{ aspectRatio: `${format.width} / ${format.height}` }}>
       <canvas ref={displayRef} className="poster-canvas"
         role={decorative ? undefined : "img"} aria-hidden={decorative || undefined}
         aria-label={decorative ? undefined : describePoster(config)}>
         {decorative ? null : describePoster(config)}
       </canvas>
-      {loading || failed ? <div className="poster-loading" aria-hidden="true">
+      {loading || failed ? <span className="poster-loading" aria-hidden="true">
         {failed ? <span className="px-4 text-center text-sm">Aperçu indisponible</span> : <LoaderCircle className="size-5 animate-spin" />}
-      </div> : null}
-    </div>
+      </span> : null}
+    </span>
   );
 }
